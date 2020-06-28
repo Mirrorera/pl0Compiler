@@ -6,6 +6,7 @@
 #include<assert.h>
 
 #include"Analyzer.h"
+#include"Keyword.h"
 
 using std::vector;
 using std::string;
@@ -39,8 +40,12 @@ int Analyzer(string::iterator p_data, const string::iterator &p_end, vector<Item
 
         if (isalpha(*p_data)) {
             string s = NextIdentifier(p_data, p_end);
-
-            receiver->push_back(Item(s, IDENTIFIER));
+            
+            if(IsKeyword(s)) {
+                receiver->push_back(Item(s, KEY_WORD));
+            } else {
+                receiver->push_back(Item(s, IDENTIFIER));
+            }
             continue;
         }
 
