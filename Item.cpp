@@ -1,6 +1,7 @@
 
 #include<string>
 #include"Item.h"
+#include"Symbol.h"
 
 
 Item::Item(int n) {
@@ -35,22 +36,17 @@ void Item::SetContent(int n) {
 
 std::ostream & operator<< (std::ostream &os, Item item) {
     std::string type;
-    switch (item.GetType())
-    {
-    case KEY_WORD:
-        type = "KEY_WORD";
-        break;
-    case IDENTIFIER:
-        type = "IDENTIFIER";
-        break;
-    case SIGNER:
-        type = "SIGNER";
-        break;
-    case NUMBER:
+    
+    if (item.GetType() >= 0 && item.GetType() <= 14) {
+        type = "KEYWORD";
+    } else if (item.GetType() <= 30){
+        type = "SIGN";
+    } else if (item.GetType() == IDENT) {
+        type = "IDENT";
+    } else if (item.GetType() == NUMBER) {
         type = "NUMBER";
-        break;
-    default:
-        break;
+    } else {
+        type = "ERROR";
     }
 
     if(item.GetType() == NUMBER) {

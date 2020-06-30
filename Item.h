@@ -2,13 +2,7 @@
 #pragma once
 #include<string>
 #include<ostream>
-
-enum ITEM_TYPE {
-    KEY_WORD,
-    IDENTIFIER,
-    SIGNER,
-    NUMBER
-};
+#include"Symbol.h"
 
 class Item {
 private:
@@ -25,7 +19,7 @@ public:
     int         ToInt()const;
 
     int  GetType()const;
-    void SetType(int _type);
+    void SetType(int type);
 
     void SetContent(std::string);
     void SetContent(int);

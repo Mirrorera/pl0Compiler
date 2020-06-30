@@ -13,4 +13,4 @@ int Analyzer(string::iterator p_data, const string::iterator &p_end, vector<Item
 
 string NextDigit(string::iterator &p_data, const string::iterator &p_end);
 string NextIdentifier(string::iterator &p_data, const string::iterator &p_end);
-string NextSigner(string::iterator &p_data, const string::iterator &p_end);
+string NextSign(string::iterator &p_data, const string::iterator &p_end);

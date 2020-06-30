@@ -6,7 +6,8 @@
 #include<assert.h>
 
 #include"Analyzer.h"
-#include"Keyword.h"
+#include"Symbol.h"
+#include"Item.h"
 
 using std::vector;
 using std::string;
@@ -40,19 +41,19 @@ int Analyzer(string::iterator p_data, const string::iterator &p_end, vector<Item
 
         if (isalpha(*p_data)) {
             string s = NextIdentifier(p_data, p_end);
-            
+
             if(IsKeyword(s)) {
-                receiver->push_back(Item(s, KEY_WORD));
+                receiver->push_back(Item(s, GetKeyWordType(s) ) );
             } else {
-                receiver->push_back(Item(s, IDENTIFIER));
+                receiver->push_back(Item(s, IDENT));
             }
             continue;
         }
 
         if (true) {
-            string s = NextSigner(p_data, p_end);
+            string s = NextSign(p_data, p_end);
 
-            receiver->push_back(Item(s, SIGNER));
+            receiver->push_back(Item(s, GetSignType(s) ) );
         }
 
         
@@ -99,7 +100,7 @@ string NextIdentifier(string::iterator &p_data, const string::iterator &p_end) {
 
     
 }
-string NextSigner(string::iterator &p_data, const string::iterator &p_end) {
+string NextSign(string::iterator &p_data, const string::iterator &p_end) {
     string ans;
 
     while(p_data < p_end) {
