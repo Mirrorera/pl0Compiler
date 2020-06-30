@@ -1,5 +1,6 @@
 
 #include<string>
+#include<utility>
 #include"Item.h"
 #include"Symbol.h"
 
@@ -34,6 +35,14 @@ void Item::SetContent(int n) {
     this->i_content = n;
 }
 
+
+void Item::SetCursor(int l, int c) {
+    this->cursor = std::make_pair(l, c);
+}
+std::pair<int, int> Item::Getcursor() {
+    return this->cursor;
+}
+
 std::ostream & operator<< (std::ostream &os, Item item) {
     std::string type;
     
@@ -50,9 +59,9 @@ std::ostream & operator<< (std::ostream &os, Item item) {
     }
 
     if(item.GetType() == NUMBER) {
-        os << item.ToInt() << " : " << type;
+        os << item.ToInt() << " : " << type << " (" << item.Getcursor().first << ", " << item.Getcursor().second << ") ";
     } else {
-        os << item.ToString() << " : " << type;
+        os << item.ToString() << " : " << type << " (" << item.Getcursor().first << ", " << item.Getcursor().second << ") ";
     }
 
     return os;

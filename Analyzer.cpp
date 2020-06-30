@@ -16,6 +16,8 @@ using std::stringstream;
 
 int Analyzer(string::iterator p_data, const string::iterator &p_end, vector<Item>* receiver) {
     receiver->clear();
+    int line = 1;
+    string::iterator line_begin = p_data;
 
     if(p_data == p_end) {
         return 0;
@@ -25,6 +27,11 @@ int Analyzer(string::iterator p_data, const string::iterator &p_end, vector<Item
         Item item;
 
         if (isblank(*p_data) || iscntrl(*p_data)) {
+            if(*p_data == '\n') {
+                line++;
+                line_begin = p_data;
+                line_begin++;
+            }
             p_data++;
             continue;    
         }
@@ -35,7 +42,10 @@ int Analyzer(string::iterator p_data, const string::iterator &p_end, vector<Item
             int n;
             ss >> n;
 
-            receiver->push_back(Item(n));
+            item = Item(n);
+
+            item.SetCursor(line, (p_data - line_begin));
+            receiver->push_back(item);
             continue;
         }
 
@@ -43,17 +53,23 @@ int Analyzer(string::iterator p_data, const string::iterator &p_end, vector<Item
             string s = NextIdentifier(p_data, p_end);
 
             if(IsKeyword(s)) {
-                receiver->push_back(Item(s, GetKeyWordType(s) ) );
+                item = Item(s, GetKeyWordType(s));
             } else {
-                receiver->push_back(Item(s, IDENT));
+                item = Item(s, IDENT);
             }
+
+            item.SetCursor(line, (p_data - line_begin));
+            receiver->push_back(item);
             continue;
         }
 
         if (true) {
             string s = NextSign(p_data, p_end);
 
-            receiver->push_back(Item(s, GetSignType(s) ) );
+            item = Item(s, GetSignType(s));
+
+            item.SetCursor(line, (p_data - line_begin));
+            receiver->push_back(item);
         }
 
         
