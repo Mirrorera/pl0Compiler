@@ -76,6 +76,8 @@ enum ITEM_TYPE {
 
     NUMBER = 32,
 
+    FINISH = 33,
+
     NOT_KEYWORD = -1,
     NOT_SIGN = -2,
     NOT_IDENT = -3

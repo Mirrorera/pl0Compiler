@@ -25,7 +25,6 @@ int Analyzer(string::iterator p_data, const string::iterator &p_end, vector<Item
 
     while(p_data < p_end) {
         Item item;
-
         if (isblank(*p_data) || iscntrl(*p_data)) {
             if(*p_data == '\n') {
                 line++;
@@ -71,9 +70,12 @@ int Analyzer(string::iterator p_data, const string::iterator &p_end, vector<Item
             item.SetCursor(line, (p_data - line_begin));
             receiver->push_back(item);
         }
-
-        
     }
+
+    Item item = Item("\0", FINISH);
+    item.SetCursor(line + 1, 0);
+
+    receiver->push_back(item);
 
     return 0;
 }

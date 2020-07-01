@@ -1,6 +1,21 @@
 
 #include<string>
+#include<iostream>
 #include"Parser.h"
+
+void Parser::throwErrors(ItemCur &cursor, std::string s) {
+    std::stringstream ss;
+    std::string err;
+    ss << cursor->Getcursor().first << ", " << cursor->Getcursor().second << ": " << s;
+    getline(ss, err);
+    
+    errors.push(err);
+
+    ItemCur nextcur = cursor;
+    while(nextcur->GetType() != FINISH && nextcur->Getcursor().first == cursor->Getcursor().first)
+        nextcur++;
+    cursor = nextcur;
+}
 
 //<分程序> ::= [<常量说明部分>][变量说明部分>]{<过程说明部分>}<语句>
 int Parser::program(ItemCur &cursor) {
@@ -21,12 +36,13 @@ int Parser::program(ItemCur &cursor) {
 //<常量说明部分> ::= const<常量定义>{,<常量定义>};
 int Parser::constDeclaration(ItemCur &cursor) {
     if(cursor->GetType() != CONST) {
+        //EMPTY
         return -1;
     }
     cursor++;
 
     if(constDefinition(cursor)) {
-        //_ERROR_
+        //HANDLED ERROR
         return -1;
     }
 
@@ -37,13 +53,13 @@ int Parser::constDeclaration(ItemCur &cursor) {
         cursor++;
 
         if(constDefinition(cursor)) {
-            //_ERROR_
+            //HANDLED ERROR
             break;
         }
     }
 
     if(cursor->GetType() != SEMICOLON) {
-        //_ERROR_
+        throwErrors(cursor, "\";\" needed");
         return -1;
     }
     cursor++;
@@ -53,15 +69,18 @@ int Parser::constDeclaration(ItemCur &cursor) {
 //<常量定义> ::= <标识符>=<无符号整数>
 int Parser::constDefinition(ItemCur &cursor) {
     if(identifier(cursor)) {
+        throwErrors(cursor, "const definition error");
         return -1;
     }
 
     if(cursor->GetType() != EQU) {
+        throwErrors(cursor, "\'=\' needed");
         return -1;
     }
     cursor++;
 
     if(integer(cursor)) {
+        throwErrors(cursor, "initial value needed");
         return -1;
     }
 
@@ -70,6 +89,7 @@ int Parser::constDefinition(ItemCur &cursor) {
 //<无符号整数> ::= <数字>{<数字>}
 int Parser::integer(ItemCur &cursor) {
     if(cursor->GetType() != NUMBER) {
+        //THROW ERROR
         return -1;
     }
     cursor++;
@@ -79,6 +99,7 @@ int Parser::integer(ItemCur &cursor) {
 //<标识符> ::= <字母>{<字母>|<数字>}
 int Parser::identifier(ItemCur &cursor) {
     if(cursor->GetType() != IDENT) {
+        //THROW ERROR
         return -1;
     }
     cursor++;
@@ -88,11 +109,13 @@ int Parser::identifier(ItemCur &cursor) {
 //<变量说明部分>::= var<标识符>{,<标识符>};
 int Parser::varDeclaration(ItemCur &cursor) {
     if(cursor->GetType() != VAR) {
+        //EMPTY
         return -1;
     }
     cursor++;
 
     if(identifier(cursor)) {
+        throwErrors(cursor, "ilegal identifier");
         return -1;
     }
 
@@ -103,12 +126,13 @@ int Parser::varDeclaration(ItemCur &cursor) {
         cursor++;
 
         if(identifier(cursor)) {
-            //_ERROR_
+            throwErrors(cursor, "identifier needed");
             break;
         }
     }
 
     if(cursor->GetType() != SEMICOLON) {
+        throwErrors(cursor, "\";\" needed");
         return -1;
     }
     cursor++;
@@ -118,13 +142,16 @@ int Parser::varDeclaration(ItemCur &cursor) {
 //<过程说明部分> ::= <过程首部><分程序>；
 int Parser::procedureDeclaration(ItemCur &cursor) {
     if(procedureHeader(cursor)) {
+        //EMPTY or ERROR
         return -1;
     }
-    if(identifier(cursor)) {
+    if(program(cursor)) {
+        throwErrors(cursor, "salve program needed");
         return -1;
     }
 
     if(cursor->GetType() != SEMICOLON) {
+        throwErrors(cursor, "\";\" needed");
         return -1;
     }
     cursor++;
@@ -134,11 +161,17 @@ int Parser::procedureDeclaration(ItemCur &cursor) {
 //<过程首部> ::= procedure<标识符>;
 int Parser::procedureHeader(ItemCur &cursor) {
     if(cursor->GetType() != PROCEDURE) {
+        //EMPTY
         return -1;
     }
     cursor++;
 
+    if(identifier(cursor)) {
+        throwErrors(cursor, "\"identifier\" needed");
+        return -1;
+    }
     if(cursor->GetType() != SEMICOLON) {
+        throwErrors(cursor, "\";\" needed");
         return -1;
     }
     cursor++;
@@ -178,18 +211,22 @@ int Parser::clause(ItemCur &cursor) {
         return 0;
     }
 
+    //EMPTY
     return 0;
 }
 //<赋值语句> ::= <标识符>:=<表达式>
 int Parser::assignClause(ItemCur &cursor) {
     if(identifier(cursor)) {
+        //EMPTY
         return -1;
     }
     if(cursor->GetType() != BECOMES) {
+        throwErrors(cursor, "\":=\" needed");
         return -1;
     }
     cursor++;
     if(expression(cursor)) {
+        throwErrors(cursor, "identifier or expression needed");
         return -1;
     }
 
@@ -199,6 +236,7 @@ int Parser::assignClause(ItemCur &cursor) {
 int Parser::expression(ItemCur &cursor) {
     plusOper(cursor);
     if(term(cursor)) {
+        //EMPTY
         return -1;
     }
     while(1) {
@@ -206,6 +244,7 @@ int Parser::expression(ItemCur &cursor) {
             break;
         }
         if(term(cursor)) {
+            throwErrors(cursor, "incomplete expression");
             return -1;
         }
     }
@@ -215,6 +254,7 @@ int Parser::expression(ItemCur &cursor) {
 //<项> ::= <因子>{<乘法运算符><因子>}
 int Parser::term(ItemCur &cursor) {
     if(factor(cursor)) {
+        //EMPTY
         return -1;
     }
 
@@ -224,6 +264,7 @@ int Parser::term(ItemCur &cursor) {
         }
 
         if(factor(cursor)) {
+            throwErrors(cursor, "incomplete expression");
             return -1;
         }
     }
@@ -244,15 +285,18 @@ int Parser::factor(ItemCur &cursor) {
     if(cursor->GetType() == LPAREN) {
         cursor++;
         if(expression(cursor)) {
+            throwErrors(cursor, "expression needed");
             return -1;
         }
         if(cursor->GetType() != RPAREN) {
+            throwErrors(cursor, "\")\" needed");
             return -1;
         }
         cursor++;
         return 0;
     }
 
+    //EMPTY
     return -1;
 }
 //<加法运算符> ::= +|-
@@ -262,6 +306,7 @@ int Parser::plusOper(ItemCur &cursor) {
         return 0;
     }
 
+    //NOT PLUS OPER
     return -1;
 }
 //<乘法运算符> ::= *|/
@@ -270,17 +315,22 @@ int Parser::timesOper(ItemCur &cursor) {
         cursor++;
         return 0;
     }
+
+    //NOT TIMES OPER
     return -1;
 }
-//<条件> ::= <表达式><关系运算符><表达式>
+//<条件> ::= <表达式><关系运算符><表达式> | odd<表达式>
 int Parser::condi(ItemCur &cursor) {
     if(expression(cursor)) {
+        //EMPTY
         return -1;
     }
     if(RelationOper(cursor)) {
+        //odd
         return -1;
     }
     if(expression(cursor)) {
+        throwErrors(cursor, "expression needed");
         return -1;
     }
     return 0;
@@ -299,6 +349,7 @@ int Parser::RelationOper(ItemCur &cursor) {
         break;
 
     default:
+        //NOT RELATION OPER
         return -1;
     }
 
@@ -307,23 +358,28 @@ int Parser::RelationOper(ItemCur &cursor) {
 //<条件语句> ::= if<条件>then<语句>[else<语句>]
 int Parser::condiClause(ItemCur &cursor) {
     if(cursor->GetType() != IF) {
+        //EMPTY
         return -1;
     }
     cursor++;
     if(condi(cursor)) {
+        throwErrors(cursor, "condition needed");
         return -1;
     }
     if(cursor->GetType() != THEN) {
+        throwErrors(cursor, "\"then\" needed");
         return -1;
     }
     cursor++;
     if(clause(cursor)) {
+        throwErrors(cursor, "incomplete condition clause");
         return -1;
     }
 
     if(cursor->GetType() == ELSE) {
         cursor++;
         if(clause(cursor)) {
+            throwErrors(cursor, "incomplete condition clause");
             return -1;
         }
     }
@@ -333,19 +389,23 @@ int Parser::condiClause(ItemCur &cursor) {
 //<当型循环语句> ::= while<条件>do<语句>
 int Parser::whileClause(ItemCur &cursor) {
     if(cursor->GetType() != WHILE) {
+        //EMPTY
         return -1;
     }
     cursor++;
     if(condi(cursor)) {
+        throwErrors(cursor, "condition needed");
         return -1;
     }
 
     if(cursor->GetType() != DO) {
+        throwErrors(cursor, "\"do\" needed");
         return -1;
     }
     cursor++;
 
     if(clause(cursor)) {
+        throwErrors(cursor, "incomplete while clause");
         return -1;
     }
 
@@ -354,10 +414,12 @@ int Parser::whileClause(ItemCur &cursor) {
 //<过程调用语句> ::= call<标识符>
 int Parser::callClause(ItemCur &cursor) {
     if(cursor->GetType() != CALL) {
+        //EMPTY
         return -1;
     }
     cursor++;
     if(identifier(cursor)) {
+        throwErrors(cursor, "imcomplete call clause, identifier needed");
         return -1;
     }
 
@@ -366,11 +428,13 @@ int Parser::callClause(ItemCur &cursor) {
 //<复合语句> ::= begin<语句>{;<语句>}end
 int Parser::complexClause(ItemCur &cursor) {
     if(cursor->GetType() != BEGIN) {
+        //EMPTY
         return -1;
     }
     cursor++;
 
     if(clause(cursor)) {
+        //EMPTY
         return -1;
     }
 
@@ -381,11 +445,13 @@ int Parser::complexClause(ItemCur &cursor) {
         cursor++;
 
         if(clause(cursor)) {
+            throwErrors(cursor, "unexpect \";\", clause needed");
             return -1;
         }
     }
 
     if(cursor->GetType() != END) {
+        throwErrors(cursor, "\"end\" needed");
         return -1;
     }
     cursor++;
@@ -395,11 +461,13 @@ int Parser::complexClause(ItemCur &cursor) {
 //<重复语句> ::= repeat<语句>{;<语句>}until<条件>
 int Parser::repeatClause(ItemCur &cursor) {
     if(cursor->GetType() != REPEAT) {
+        //EMPTY
         return -1;
     }
     cursor++;
 
     if(clause(cursor)) {
+        //EMPTY
         return -1;
     }
 
@@ -410,16 +478,19 @@ int Parser::repeatClause(ItemCur &cursor) {
         cursor++;
 
         if(clause(cursor)) {
+            throwErrors(cursor, "unexpect \";\", clause needed");
             return -1;
         }
     }
 
     if(cursor->GetType() != UNTIL) {
+        throwErrors(cursor, "\"until\" needed");
         return -1;
     }
     cursor++;
 
     if(condi(cursor)) {
+        throwErrors(cursor, "incomplete repeat clause, condition needed");
         return -1;
     }
 
@@ -428,11 +499,13 @@ int Parser::repeatClause(ItemCur &cursor) {
 //<读语句> ::= read'('<标识符>{,<标识符>}')'
 int Parser::readClause(ItemCur &cursor) {
     if(cursor->GetType() != READ) {
+        //EMPTY
         return -1;
     }
     cursor++;
 
     if(cursor->GetType() != LPAREN) {
+        throwErrors(cursor, "\"(\" needed");
         return -1;
     }
     cursor++;
@@ -448,11 +521,13 @@ int Parser::readClause(ItemCur &cursor) {
         cursor++;
 
         if(identifier(cursor)) {
+            throwErrors(cursor, "identifier needed");
             return -1;
         }
     }
 
     if(cursor->GetType() != RPAREN) {
+        throwErrors(cursor, "\")\" needed");
         return -1;
     }
     cursor++;
@@ -467,6 +542,7 @@ int Parser::writeClause(ItemCur &cursor) {
     cursor++;
 
     if(cursor->GetType() != LPAREN) {
+        throwErrors(cursor, "\"(\" needed");
         return -1;
     }
     cursor++;
@@ -482,11 +558,13 @@ int Parser::writeClause(ItemCur &cursor) {
         cursor++;
 
         if(identifier(cursor)) {
+            throwErrors(cursor, "identifier needed");
             return -1;
         }
     }
 
     if(cursor->GetType() != RPAREN) {
+        throwErrors(cursor, "\")\" needed");
         return -1;
     }
     cursor++;
@@ -494,3 +572,19 @@ int Parser::writeClause(ItemCur &cursor) {
     return 0;
 }
 
+int Parser::MainParser(ItemCur cursor, const ItemCur &_end) {
+    this->endcur = _end;
+    if(program(cursor)) {
+        return -1;
+    }
+    if(cursor->GetType() != PERIOD) {
+        throwErrors(cursor, "\".\" needed");
+        return -1;
+    }
+    cursor++;
+    if(cursor->GetType() != FINISH) {
+        throwErrors(cursor, "unexpect items after program");
+        return -1;
+    }
+    return 0;
+}

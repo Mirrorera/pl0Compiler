@@ -1,4 +1,5 @@
 
+#include<sstream>
 #include<string>
 #include<vector>
 #include<queue>
@@ -6,9 +7,9 @@
 
 typedef std::vector<Item>::iterator ItemCur;
 
-static class Parser {
+class Parser {
 private:
-    std::queue<std::string> errors;
+    void throwErrors(ItemCur &cursor, std::string s);
 
     int program(ItemCur &cursor);
     
@@ -47,15 +48,7 @@ private:
     int writeClause(ItemCur &cursor);
 
 public:
-    int MainParser(ItemCur &cursor, const ItemCur &end) {
-        if(program(cursor)) {
-            return -1;
-        }
-        cursor++;
-        if(cursor != end) {
-            return -1;
-        }
-
-        return 0;
-    }
+    int MainParser(ItemCur cursor, const ItemCur &end);
+    std::queue<std::string> errors;
+    ItemCur endcur;
 };

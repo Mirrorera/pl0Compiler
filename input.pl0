@@ -1,0 +1,10 @@
+const
+    a=1, b=2;
+var
+    2c, d, e;
+begin
+    c:=a;
+    if d>=c then
+        e:=d;
+    write(e)
+end
