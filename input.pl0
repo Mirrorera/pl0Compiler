@@ -1,10 +1,19 @@
 const
     a=1, b=2;
 var
-    2c, d, e;
+    c, d, e;
+procedure max;
 begin
-    c:=a;
-    if d>=c then
-        e:=d;
-    write(e)
+    if c > d then
+        e = c
+    else
+        e := d
+end;
+begin
+    c := 123;
+    while d>=c
+        c := c * a + d / e;
+    repeat
+        call max;
+    until a < b;
 end

@@ -175,6 +175,8 @@ int Parser::procedureHeader(ItemCur &cursor) {
         return -1;
     }
     cursor++;
+
+    return 0;
 }
 //<语句> ::= <赋值语句>|<条件语句>|<当型循环语句>|<过程调用语句>|<读语句>|<写语句>|<复合语句>|<重复语句>|<空>
 int Parser::clause(ItemCur &cursor) {
